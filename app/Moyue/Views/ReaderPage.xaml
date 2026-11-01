@@ -1,0 +1,211 @@
+<Page
+    x:Class="Moyue.ReaderPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Moyue"
+    Background="Black">
+
+    <Grid x:Name="Root" Background="Black">
+        <!-- 纵向滚动 -->
+        <ScrollViewer
+            x:Name="Viewport"
+            ZoomMode="Enabled"
+            MinZoomFactor="1"
+            MaxZoomFactor="3"
+            HorizontalScrollMode="Auto"
+            HorizontalScrollBarVisibility="Hidden"
+            VerticalScrollBarVisibility="Hidden"
+            ViewChanged="ViewChanged"
+            Tapped="ContentTapped">
+            <StackPanel x:Name="Strip" />
+        </ScrollViewer>
+
+        <!-- 横向翻页 -->
+        <FlipView
+            x:Name="Flip"
+            Visibility="Collapsed"
+            Background="Black"
+            SelectionChanged="FlipChanged"
+            Tapped="ContentTapped">
+            <FlipView.ItemTemplate>
+                <DataTemplate x:DataType="local:ReaderPageItem">
+                    <Grid>
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <TextBlock Text="{x:Bind Number}" FontSize="34" FontWeight="Light" HorizontalAlignment="Center" Foreground="{ThemeResource SystemControlForegroundBaseMediumLowBrush}" />
+                            <TextBlock Text="加载失败，打开工具栏重试" Visibility="{x:Bind FailedVisibility, Mode=OneWay}" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{StaticResource ErrorBrush}" />
+                        </StackPanel>
+                        <ScrollViewer
+                            x:Name="Zoom"
+                            ZoomMode="Enabled"
+                            MinZoomFactor="1"
+                            MaxZoomFactor="3"
+                            HorizontalScrollMode="Auto"
+                            VerticalScrollMode="Auto"
+                            HorizontalScrollBarVisibility="Hidden"
+                            VerticalScrollBarVisibility="Hidden">
+                            <Image
+                                Source="{x:Bind Image, Mode=OneWay}"
+                                Stretch="Uniform"
+                                Width="{Binding ViewportWidth, ElementName=Zoom}"
+                                Height="{Binding ViewportHeight, ElementName=Zoom}" />
+                        </ScrollViewer>
+                    </Grid>
+                </DataTemplate>
+            </FlipView.ItemTemplate>
+        </FlipView>
+
+        <!-- 顶部信息 -->
+        <Grid x:Name="TopBar" VerticalAlignment="Top" Background="{StaticResource OverlayBrush}" Padding="12,8,12,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock x:Name="BookName" Style="{StaticResource CaptionMutedStyle}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                <TextBlock x:Name="ChapterName" Style="{StaticResource SingleLineTextStyle}" FontSize="18" />
+            </StackPanel>
+            <TextBlock x:Name="SourceBadge" Grid.Column="1" Style="{StaticResource CaptionMutedStyle}" VerticalAlignment="Bottom" Margin="12,0,0,2" />
+        </Grid>
+
+        <!-- 底部工具 -->
+        <StackPanel x:Name="BottomBar" VerticalAlignment="Bottom" Background="{StaticResource OverlayBrush}">
+            <TextBlock x:Name="Hint" Visibility="Collapsed" Margin="12,10,12,0" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource SystemControlForegroundAccentBrush}" Text="轻点画面中央可隐藏或显示工具栏；翻页模式下轻点左右两侧翻页。" />
+            <Grid x:Name="MessagePanel" Visibility="Collapsed" Margin="12,8,12,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="Message" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{StaticResource ErrorBrush}" VerticalAlignment="Center" />
+                <HyperlinkButton Grid.Column="1" Style="{StaticResource TextLinkStyle}" Content="重试" Margin="12,0,0,0" Click="RetryClick" />
+            </Grid>
+            <Grid Margin="12,8,12,0">
+                <TextBlock x:Name="PageLabel" Style="{StaticResource CaptionTextBlockStyle}" Text="正在打开章节…" />
+                <TextBlock x:Name="ModeLabel" Style="{StaticResource CaptionMutedStyle}" HorizontalAlignment="Right" />
+            </Grid>
+            <Slider
+                x:Name="PageSlider"
+                Margin="12,0,12,0"
+                Minimum="1"
+                Maximum="1"
+                StepFrequency="1"
+                SmallChange="1"
+                IsThumbToolTipEnabled="True"
+                ValueChanged="SliderChanged" />
+            <Grid HorizontalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <AppBarButton x:Name="PrevChapter" Label="上一章" Click="PrevChapterClick">
+                    <AppBarButton.Icon><FontIcon Glyph="&#xE892;" /></AppBarButton.Icon>
+                </AppBarButton>
+                <AppBarButton Grid.Column="1" Label="目录" Click="DirectoryClick">
+                    <AppBarButton.Icon><FontIcon Glyph="&#xE8FD;" /></AppBarButton.Icon>
+                </AppBarButton>
+                <AppBarToggleButton x:Name="BookmarkToggle" Grid.Column="2" Label="书签" IsEnabled="False" Click="BookmarkToggleClick">
+                    <AppBarToggleButton.Icon><FontIcon Glyph="&#xE8A4;" /></AppBarToggleButton.Icon>
+                </AppBarToggleButton>
+                <AppBarButton Grid.Column="3" Label="阅读设置" Click="ReaderSettingsClick">
+                    <AppBarButton.Icon><FontIcon Glyph="&#xE713;" /></AppBarButton.Icon>
+                </AppBarButton>
+                <AppBarButton x:Name="NextChapter" Grid.Column="4" Label="下一章" Click="NextChapterClick">
+                    <AppBarButton.Icon><FontIcon Glyph="&#xE893;" /></AppBarButton.Icon>
+                </AppBarButton>
+            </Grid>
+        </StackPanel>
+
+        <!-- 阅读设置 -->
+        <Border
+            x:Name="SettingsPanel"
+            Visibility="Collapsed"
+            VerticalAlignment="Bottom"
+            Background="{StaticResource RaisedBrush}"
+            BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}"
+            BorderThickness="0,1,0,0"
+            Padding="12,12,12,16">
+            <StackPanel>
+                <TextBlock Text="阅读设置" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <RadioButton x:Name="ScrollMode" GroupName="ReaderMode" Content="纵向滚动" Margin="0,8,0,0" Checked="ModeChecked" />
+                <RadioButton x:Name="PagedMode" GroupName="ReaderMode" Content="横向翻页" Checked="ModeChecked" />
+                <TextBlock Style="{StaticResource CaptionMutedStyle}" Margin="0,8,0,0" Text="选择会作为默认阅读方式保存。轻点画面中央可隐藏或显示工具栏。" />
+                <HyperlinkButton Style="{StaticResource TextLinkStyle}" Content="完成" Click="CloseSettingsClick" />
+            </StackPanel>
+        </Border>
+
+        <!-- 目录 -->
+        <Grid x:Name="DirectoryPanel" Visibility="Collapsed" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <StackPanel Margin="12,12,12,8">
+                <TextBlock x:Name="DirectoryBook" Style="{StaticResource AppNameStyle}" TextTrimming="CharacterEllipsis" />
+                <StackPanel Orientation="Horizontal">
+                    <RadioButton x:Name="ChaptersTab" Style="{StaticResource FilterTabStyle}" GroupName="DirectoryTab" Content="目录" IsChecked="True" Checked="DirectoryTabChecked" />
+                    <RadioButton x:Name="BookmarksTab" Style="{StaticResource FilterTabStyle}" GroupName="DirectoryTab" Content="书签" Checked="DirectoryTabChecked" />
+                </StackPanel>
+            </StackPanel>
+            <ListView
+                x:Name="DirectoryList"
+                Grid.Row="1"
+                Padding="12,0,12,24"
+                IsItemClickEnabled="True"
+                SelectionMode="Single"
+                DisplayMemberPath="Title"
+                ItemClick="DirectoryItemClick">
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem" BasedOn="{StaticResource RowContainerStyle}">
+                        <Setter Property="MinHeight" Value="48" />
+                        <Setter Property="VerticalContentAlignment" Value="Center" />
+                    </Style>
+                </ListView.ItemContainerStyle>
+            </ListView>
+            <TextBlock
+                x:Name="DirectoryEmpty"
+                Grid.Row="1"
+                Margin="12,8,12,0"
+                VerticalAlignment="Top"
+                Visibility="Collapsed"
+                Style="{StaticResource SecondaryTextStyle}"
+                Text="目录不可用。返回详情页刷新后再试。" />
+            <ListView
+                x:Name="BookmarkList"
+                Grid.Row="1"
+                Padding="12,0,12,24"
+                Visibility="Collapsed"
+                IsItemClickEnabled="True"
+                SelectionMode="None"
+                ItemClick="BookmarkItemClick"
+                ItemContainerStyle="{StaticResource RowContainerStyle}">
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="local:BookmarkItem">
+                        <Grid MinHeight="52" Padding="0,6,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="{x:Bind ChapterTitle}" Style="{StaticResource SingleLineTextStyle}" />
+                                <TextBlock Text="{x:Bind Line}" Style="{StaticResource CaptionMutedStyle}" />
+                            </StackPanel>
+                            <HyperlinkButton Grid.Column="1" Style="{StaticResource TextLinkStyle}" Content="删除" Margin="12,0,0,0" Click="BookmarkRemoveClick" />
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+            <TextBlock
+                x:Name="BookmarkEmpty"
+                Grid.Row="1"
+                Margin="12,8,12,0"
+                VerticalAlignment="Top"
+                Visibility="Collapsed"
+                Style="{StaticResource SecondaryTextStyle}"
+                Text="这部漫画还没有书签。阅读时点底部的“书签”即可添加当前页。" />
+        </Grid>
+
+        <ProgressBar x:Name="Busy" VerticalAlignment="Top" IsIndeterminate="True" Visibility="Collapsed" />
+    </Grid>
+</Page>

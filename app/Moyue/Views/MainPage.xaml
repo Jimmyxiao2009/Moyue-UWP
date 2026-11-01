@@ -1,0 +1,406 @@
+<Page
+    x:Class="Moyue.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Moyue"
+    NavigationCacheMode="Required"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Page.Resources>
+        <CollectionViewSource x:Name="DownloadGroups" IsSourceGrouped="True" />
+
+        <DataTemplate x:Key="CoverCardTemplate" x:DataType="local:BookItem">
+            <StackPanel Background="Transparent" Holding="BookHolding" RightTapped="BookRightTapped">
+                <Grid>
+                    <local:CoverImage Book="{x:Bind Book}" />
+                    <Border VerticalAlignment="Bottom" Background="{StaticResource CoverBadgeBrush}" Padding="6,3,6,4">
+                        <TextBlock Text="{x:Bind Badge}" FontSize="12" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                    </Border>
+                </Grid>
+                <TextBlock Text="{x:Bind Title}" Style="{StaticResource SingleLineTextStyle}" Margin="0,6,0,0" />
+                <TextBlock Text="{x:Bind Meta}" Style="{StaticResource CaptionMutedStyle}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+        </DataTemplate>
+
+        <DataTemplate x:Key="ResultRowTemplate" x:DataType="local:BookItem">
+            <Grid Background="Transparent" Padding="0,8,0,8" Holding="BookHolding" RightTapped="BookRightTapped">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="72" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <local:CoverImage Width="72" VerticalAlignment="Top" Book="{x:Bind Book}" />
+                <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                    <TextBlock Text="{x:Bind Title}" Style="{StaticResource BodyTextBlockStyle}" FontSize="17" MaxLines="2" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{x:Bind Badge}" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource SystemControlForegroundAccentBrush}" Margin="0,4,0,0" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{x:Bind Meta}" Style="{StaticResource CaptionMutedStyle}" Margin="0,2,0,0" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{x:Bind TagsText}" Visibility="{x:Bind TagsVisibility}" Style="{StaticResource CaptionMutedStyle}" Margin="0,2,0,0" MaxLines="2" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+
+        <!-- List mode inside a GridView: one full-width row per item, gutter handled by the -6 margin. -->
+        <Style x:Key="RowGridItemStyle" TargetType="GridViewItem">
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="6,0,6,0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Top" />
+        </Style>
+
+        <DataTemplate x:Key="DownloadRowTemplate" x:DataType="local:DownloadItem">
+            <StackPanel Background="Transparent" Padding="0,8,0,4">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="{x:Bind ChapterTitle}" Style="{StaticResource SingleLineTextStyle}" />
+                    <TextBlock Grid.Column="1" Text="{x:Bind State, Mode=OneWay}" Foreground="{x:Bind StateBrush, Mode=OneWay}" Style="{StaticResource BodyTextBlockStyle}" Margin="12,0,0,0" />
+                </Grid>
+                <ProgressBar Style="{StaticResource ThinProgressStyle}" Maximum="100" Value="{x:Bind Percent, Mode=OneWay}" Margin="0,8,0,6" />
+                <TextBlock Text="{x:Bind Detail, Mode=OneWay}" Style="{StaticResource CaptionMutedStyle}" />
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <HyperlinkButton Style="{StaticResource TextLinkStyle}" Content="{x:Bind Action, Mode=OneWay}" Click="DownloadActionClick" />
+                    <HyperlinkButton Style="{StaticResource TextLinkStyle}" Content="删除" Margin="20,0,0,0" Click="DownloadRemoveClick" />
+                </StackPanel>
+            </StackPanel>
+        </DataTemplate>
+    </Page.Resources>
+
+    <Grid>
+        <Pivot x:Name="Hub" Title="墨阅" SelectionChanged="HubSelectionChanged">
+
+            <!-- 书架 -->
+            <PivotItem Header="书架">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <ScrollViewer HorizontalScrollBarVisibility="Hidden" HorizontalScrollMode="Auto" VerticalScrollMode="Disabled" VerticalScrollBarVisibility="Disabled">
+                        <StackPanel Orientation="Horizontal">
+                            <RadioButton Style="{StaticResource FilterTabSmallStyle}" GroupName="Library" Content="全部" Tag="" IsChecked="True" Checked="LibraryFilterChecked" />
+                            <RadioButton Style="{StaticResource FilterTabSmallStyle}" GroupName="Library" Content="JM" Tag="jm" Checked="LibraryFilterChecked" />
+                            <RadioButton Style="{StaticResource FilterTabSmallStyle}" GroupName="Library" Content="香香腐宅" Tag="boylove" Checked="LibraryFilterChecked" />
+                            <RadioButton Style="{StaticResource FilterTabSmallStyle}" GroupName="Library" Content="漫蛙" Tag="manwa" Checked="LibraryFilterChecked" />
+                        </StackPanel>
+                    </ScrollViewer>
+                    <GridView
+                        x:Name="LibraryGrid"
+                        Grid.Row="1"
+                        Margin="-6,0,-6,0"
+                        ItemTemplate="{StaticResource CoverCardTemplate}"
+                        ItemContainerStyle="{StaticResource CardContainerStyle}"
+                        IsItemClickEnabled="True"
+                        SelectionMode="None"
+                        ItemClick="BookClick"
+                        SizeChanged="CardGridSizeChanged">
+                        <GridView.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <ItemsWrapGrid Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </GridView.ItemsPanel>
+                        <GridView.Header>
+                            <StackPanel Margin="6,0,6,0">
+                                <StackPanel x:Name="ContinuePanel" Visibility="Collapsed">
+                                    <TextBlock Text="继续阅读" Style="{StaticResource SectionTitleStyle}" Margin="0,4,0,8" />
+                                    <Grid Background="{StaticResource RaisedBrush}">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+                                        <!-- Info area opens the detail page; the accent button resumes reading. -->
+                                        <Button Style="{StaticResource TiltButtonStyle}" Click="ContinueDetailClick">
+                                            <Grid Padding="12,12,12,8">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="56" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <local:CoverImage x:Name="ContinueCover" Width="56" VerticalAlignment="Top" />
+                                                <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                                                    <TextBlock x:Name="ContinueTitle" Style="{StaticResource SingleLineTextStyle}" FontSize="18" />
+                                                    <TextBlock x:Name="ContinueChapter" Style="{StaticResource SecondaryTextStyle}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Margin="0,4,0,0" />
+                                                    <TextBlock x:Name="ContinuePage" Style="{StaticResource CaptionMutedStyle}" Margin="0,4,0,0" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </Button>
+                                        <Grid Grid.Row="1" Padding="12,0,12,12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <Button Style="{StaticResource AccentButtonStyle}" HorizontalAlignment="Stretch" Content="从上次的地方继续" Click="ContinueClick" />
+                                            <HyperlinkButton Grid.Column="1" Style="{StaticResource TextLinkStyle}" Margin="16,0,0,0" Content="详情" Click="ContinueDetailClick" />
+                                        </Grid>
+                                    </Grid>
+                                </StackPanel>
+                                <TextBlock x:Name="FavoritesTitle" Style="{StaticResource SectionTitleStyle}" Text="收藏" />
+                                <StackPanel x:Name="LibraryEmpty" Visibility="Collapsed" Margin="0,8,0,0">
+                                    <TextBlock x:Name="LibraryEmptyText" Style="{StaticResource SecondaryTextStyle}" />
+                                    <StackPanel Orientation="Horizontal">
+                                        <HyperlinkButton Style="{StaticResource TextLinkStyle}" Content="去发现" Click="GoDiscoverClick" />
+                                        <HyperlinkButton Style="{StaticResource TextLinkStyle}" Content="去搜索" Margin="20,0,0,0" Click="GoSearchClick" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </GridView.Header>
+                    </GridView>
+                </Grid>
+            </PivotItem>
+
+            <!-- 发现 -->
+            <PivotItem Header="发现">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <ScrollViewer HorizontalScrollBarVisibility="Hidden" HorizontalScrollMode="Auto" VerticalScrollMode="Disabled" VerticalScrollBarVisibility="Disabled">
+                        <StackPanel Orientation="Horizontal">
+                            <RadioButton Style="{StaticResource FilterTabSmallStyle}" GroupName="Discover" Content="JM" Tag="jm" IsChecked="True" Checked="DiscoverSourceChecked" />
+                            <RadioButton Style="{StaticResource FilterTabSmallStyle}" GroupName="Discover" Content="香香腐宅" Tag="boylove" Checked="DiscoverSourceChecked" />
+                            <RadioButton Style="{StaticResource FilterTabSmallStyle}" GroupName="Discover" Content="漫蛙" Tag="manwa" Checked="DiscoverSourceChecked" />
+                        </StackPanel>
+                    </ScrollViewer>
+                    <GridView
+                        x:Name="DiscoverGrid"
+                        Grid.Row="1"
+                        Margin="-6,0,-6,0"
+                        ItemTemplate="{StaticResource CoverCardTemplate}"
+                        ItemContainerStyle="{StaticResource CardContainerStyle}"
+                        IsItemClickEnabled="True"
+                        SelectionMode="None"
+                        ItemClick="BookClick"
+                        SizeChanged="CardGridSizeChanged">
+                        <GridView.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <ItemsWrapGrid Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </GridView.ItemsPanel>
+                        <GridView.Header>
+                            <StackPanel Margin="6,0,6,12">
+                                <TextBlock Style="{StaticResource CaptionMutedStyle}" Text="来源提供的最新列表，轻点封面查看详情。" />
+                                <TextBlock x:Name="DiscoverStatus" Style="{StaticResource SecondaryTextStyle}" Margin="0,8,0,0" />
+                                <HyperlinkButton x:Name="DiscoverRetry" Style="{StaticResource TextLinkStyle}" Content="重试" Visibility="Collapsed" Click="DiscoverRefreshClick" />
+                            </StackPanel>
+                        </GridView.Header>
+                        <GridView.Footer>
+                            <HyperlinkButton x:Name="DiscoverMore" Style="{StaticResource TextLinkStyle}" Margin="6,0,6,24" Content="加载更多" Visibility="Collapsed" Click="DiscoverMoreClick" />
+                        </GridView.Footer>
+                    </GridView>
+                </Grid>
+            </PivotItem>
+
+            <!-- 搜索 -->
+            <PivotItem Header="搜索">
+                <GridView
+                    x:Name="ResultsList"
+                    Margin="-6,0,-6,0"
+                    ItemTemplate="{StaticResource ResultRowTemplate}"
+                    ItemContainerStyle="{StaticResource RowGridItemStyle}"
+                    IsItemClickEnabled="True"
+                    SelectionMode="None"
+                    ItemClick="BookClick"
+                    SizeChanged="CardGridSizeChanged">
+                    <GridView.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <ItemsWrapGrid Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </GridView.ItemsPanel>
+                    <GridView.Header>
+                        <StackPanel Margin="6,0,6,0">
+                            <AutoSuggestBox
+                                x:Name="QueryBox"
+                                Margin="0,4,0,0"
+                                PlaceholderText="标题、作者或标签"
+                                QueryIcon="Find"
+                                GotFocus="QueryGotFocus"
+                                TextChanged="QueryTextChanged"
+                                SuggestionChosen="QuerySuggestionChosen"
+                                QuerySubmitted="QuerySubmitted" />
+                            <Grid>
+                                <HyperlinkButton x:Name="AdvancedLink" Style="{StaticResource TextLinkStyle}" Content="高级搜索" Click="AdvancedClick" />
+                                <HyperlinkButton x:Name="ClearLink" Style="{StaticResource TextLinkStyle}" Content="清除条件" HorizontalAlignment="Right" Visibility="Collapsed" Click="ClearSearchClick" />
+                            </Grid>
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton x:Name="ScopeOnline" Style="{StaticResource FilterTabSmallStyle}" GroupName="Scope" Content="在线" IsChecked="True" Checked="ScopeChecked" />
+                                <RadioButton x:Name="ScopeLocal" Style="{StaticResource FilterTabSmallStyle}" GroupName="Scope" Content="本地资料" Checked="ScopeChecked" />
+                            </StackPanel>
+                            <ScrollViewer HorizontalScrollBarVisibility="Hidden" HorizontalScrollMode="Auto" VerticalScrollMode="Disabled" VerticalScrollBarVisibility="Disabled">
+                                <StackPanel Orientation="Horizontal">
+                                    <RadioButton x:Name="SourceAll" Style="{StaticResource FilterTabSmallStyle}" GroupName="SearchSource" Content="全部来源" Tag="" IsChecked="True" Checked="SearchSourceChecked" />
+                                    <RadioButton x:Name="SourceJm" Style="{StaticResource FilterTabSmallStyle}" GroupName="SearchSource" Content="JM" Tag="jm" Checked="SearchSourceChecked" />
+                                    <RadioButton x:Name="SourceBoylove" Style="{StaticResource FilterTabSmallStyle}" GroupName="SearchSource" Content="香香腐宅" Tag="boylove" Checked="SearchSourceChecked" />
+                                    <RadioButton x:Name="SourceManwa" Style="{StaticResource FilterTabSmallStyle}" GroupName="SearchSource" Content="漫蛙" Tag="manwa" Checked="SearchSourceChecked" />
+                                </StackPanel>
+                            </ScrollViewer>
+                            <ScrollViewer x:Name="ChipsScroller" Margin="0,4,0,4" Visibility="Collapsed" HorizontalScrollBarVisibility="Hidden" HorizontalScrollMode="Auto" VerticalScrollMode="Disabled" VerticalScrollBarVisibility="Disabled">
+                                <ItemsControl x:Name="Chips">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="local:FilterChip">
+                                            <Button Style="{StaticResource ChipButtonStyle}" Content="{x:Bind Label}" Click="ChipClick" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                            <TextBlock x:Name="FilterNote" Style="{StaticResource CaptionMutedStyle}" Visibility="Collapsed" Margin="0,4,0,4" Text="作者、标签、状态等条件只筛选已加载的结果，继续加载时会重新应用。" />
+                            <Grid x:Name="StatusSummaryRow" MinHeight="36" Visibility="Collapsed">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="StatusSummary" Style="{StaticResource CaptionMutedStyle}" VerticalAlignment="Center" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                                <HyperlinkButton x:Name="StatusToggle" Grid.Column="1" Style="{StaticResource TextLinkStyle}" Margin="12,0,0,0" Content="详情" Click="StatusToggleClick" />
+                            </Grid>
+                            <ItemsControl x:Name="StatusList" Margin="0,0,0,0" Visibility="Collapsed">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="local:SourceStatus">
+                                        <Grid MinHeight="36">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="80" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="{x:Bind Name}" Style="{StaticResource BodyTextBlockStyle}" FontSize="13" VerticalAlignment="Center" />
+                                            <TextBlock Grid.Column="1" Text="{x:Bind Text, Mode=OneWay}" Foreground="{x:Bind TextBrush, Mode=OneWay}" Style="{StaticResource CaptionTextBlockStyle}" VerticalAlignment="Center" MaxLines="2" TextTrimming="CharacterEllipsis" />
+                                            <HyperlinkButton Grid.Column="2" Style="{StaticResource TextLinkStyle}" Content="重试" Margin="12,0,0,0" Visibility="{x:Bind RetryVisibility, Mode=OneWay}" Click="RetrySourceClick" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <TextBlock x:Name="SearchMessage" Style="{StaticResource SecondaryTextStyle}" Margin="0,12,0,0" Visibility="Collapsed" />
+                            <TextBlock x:Name="ResultsTitle" Style="{StaticResource SectionTitleStyle}" Visibility="Collapsed" />
+                        </StackPanel>
+                    </GridView.Header>
+                    <GridView.Footer>
+                        <StackPanel Margin="6,4,6,24">
+                            <TextBlock x:Name="PagingStatus" Style="{StaticResource CaptionMutedStyle}" Visibility="Collapsed" />
+                            <HyperlinkButton x:Name="MoreResults" Style="{StaticResource TextLinkStyle}" Content="加载更多结果" Visibility="Collapsed" Click="MoreResultsClick" />
+                        </StackPanel>
+                    </GridView.Footer>
+                </GridView>
+            </PivotItem>
+
+            <!-- 下载 -->
+            <PivotItem Header="下载">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid>
+                        <TextBlock x:Name="DownloadSummary" Style="{StaticResource CaptionMutedStyle}" VerticalAlignment="Center" Margin="0,0,64,0" />
+                        <HyperlinkButton Style="{StaticResource TextLinkStyle}" Content="调整" HorizontalAlignment="Right" Click="SettingsClick" />
+                    </Grid>
+                    <StackPanel Grid.Row="1" Orientation="Horizontal">
+                        <RadioButton x:Name="DownloadActiveTab" Style="{StaticResource FilterTabStyle}" GroupName="DownloadTab" Content="进行中" IsChecked="True" Checked="DownloadTabChecked" />
+                        <RadioButton x:Name="DownloadDoneTab" Style="{StaticResource FilterTabStyle}" GroupName="DownloadTab" Content="已完成" Checked="DownloadTabChecked" />
+                    </StackPanel>
+                    <ListView
+                        x:Name="DownloadList"
+                        Grid.Row="2"
+                        ItemsSource="{Binding Source={StaticResource DownloadGroups}}"
+                        ItemTemplate="{StaticResource DownloadRowTemplate}"
+                        ItemContainerStyle="{StaticResource RowContainerStyle}"
+                        IsItemClickEnabled="True"
+                        SelectionMode="None"
+                        ItemClick="DownloadClick">
+                        <ListView.GroupStyle>
+                            <GroupStyle HidesIfEmpty="True">
+                                <GroupStyle.HeaderContainerStyle>
+                                    <Style TargetType="ListViewHeaderItem">
+                                        <Setter Property="Padding" Value="0" />
+                                        <Setter Property="Margin" Value="0,16,0,0" />
+                                        <Setter Property="MinHeight" Value="0" />
+                                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                    </Style>
+                                </GroupStyle.HeaderContainerStyle>
+                                <GroupStyle.HeaderTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Title}" Style="{StaticResource SubtitleTextBlockStyle}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                                    </DataTemplate>
+                                </GroupStyle.HeaderTemplate>
+                            </GroupStyle>
+                        </ListView.GroupStyle>
+                    </ListView>
+                    <!-- Empty states overlay the list: an empty ListView pushes its footer to the bottom. -->
+                    <StackPanel x:Name="DownloadEmpty" Grid.Row="2" Margin="0,16,0,0" VerticalAlignment="Top" Visibility="Collapsed">
+                        <TextBlock x:Name="DownloadEmptyText" Style="{StaticResource SecondaryTextStyle}" />
+                        <HyperlinkButton Style="{StaticResource TextLinkStyle}" Content="去书架选择漫画" Click="GoLibraryClick" />
+                    </StackPanel>
+                </Grid>
+            </PivotItem>
+        </Pivot>
+
+        <ProgressBar x:Name="Busy" VerticalAlignment="Top" IsIndeterminate="True" Visibility="Collapsed" />
+    </Grid>
+
+    <Page.BottomAppBar>
+        <CommandBar x:Name="Commands" ClosedDisplayMode="Minimal">
+            <AppBarButton x:Name="LayoutCommand" Label="列表视图" Click="LayoutClick">
+                <AppBarButton.Icon><FontIcon x:Name="LayoutIcon" Glyph="&#xE8FD;" /></AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton x:Name="SizeCommand" Label="磁贴大小">
+                <AppBarButton.Icon><FontIcon Glyph="&#xE71E;" /></AppBarButton.Icon>
+                <AppBarButton.Flyout>
+                    <MenuFlyout>
+                        <ToggleMenuFlyoutItem x:Name="SizeSmall" Text="小" Tag="0" Click="SizeClick" />
+                        <ToggleMenuFlyoutItem x:Name="SizeMedium" Text="中" Tag="1" Click="SizeClick" />
+                        <ToggleMenuFlyoutItem x:Name="SizeLarge" Text="大" Tag="2" Click="SizeClick" />
+                    </MenuFlyout>
+                </AppBarButton.Flyout>
+            </AppBarButton>
+            <AppBarButton x:Name="DiscoverRefreshCommand" Label="刷新" Click="DiscoverRefreshClick">
+                <AppBarButton.Icon><FontIcon Glyph="&#xE72C;" /></AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton x:Name="SearchCommand" Label="搜索" Click="SearchCommandClick">
+                <AppBarButton.Icon><FontIcon Glyph="&#xE721;" /></AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton x:Name="AdvancedCommand" Label="高级搜索" Click="AdvancedClick">
+                <AppBarButton.Icon><FontIcon Glyph="&#xE71C;" /></AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton x:Name="IdCommand" Label="ID 直达" Click="IdClick">
+                <AppBarButton.Icon><FontIcon Glyph="&#xE71B;" /></AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton x:Name="PauseAllCommand" Label="全部暂停" Click="PauseAllClick">
+                <AppBarButton.Icon><FontIcon Glyph="&#xE769;" /></AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton x:Name="ResumeAllCommand" Label="全部继续" Click="ResumeAllClick">
+                <AppBarButton.Icon><FontIcon Glyph="&#xE768;" /></AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton x:Name="RetryFailedCommand" Label="重试失败" Click="RetryFailedClick">
+                <AppBarButton.Icon><FontIcon Glyph="&#xE72C;" /></AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton x:Name="LinesCommand" Label="线路" Click="LinesClick">
+                <AppBarButton.Icon><FontIcon Glyph="&#xE774;" /></AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton x:Name="MultiSelectCommand" Label="多选" Click="MultiSelectClick">
+                <AppBarButton.Icon><FontIcon Glyph="&#xE762;" /></AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton x:Name="FavoriteSelectedCommand" Label="加入书架" Visibility="Collapsed" IsEnabled="False" Click="FavoriteSelectedClick">
+                <AppBarButton.Icon><FontIcon Glyph="&#xE734;" /></AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton x:Name="DownloadSelectedCommand" Label="下载" Visibility="Collapsed" IsEnabled="False" Click="DownloadSelectedClick">
+                <AppBarButton.Icon><FontIcon Glyph="&#xE896;" /></AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton x:Name="SelectAllCommand" Label="全选" Visibility="Collapsed" Click="SelectAllClick">
+                <AppBarButton.Icon><FontIcon Glyph="&#xE8B3;" /></AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton x:Name="CancelSelectCommand" Label="取消" Visibility="Collapsed" Click="CancelSelectClick">
+                <AppBarButton.Icon><FontIcon Glyph="&#xE711;" /></AppBarButton.Icon>
+            </AppBarButton>            <CommandBar.SecondaryCommands>
+                <AppBarButton Label="历史" Click="HistoryClick" />
+                <AppBarButton Label="书签" Click="BookmarksClick" />
+                <AppBarButton Label="设置" Click="SettingsClick" />
+                <AppBarButton Label="来源与线路" Click="LinesClick" />
+            </CommandBar.SecondaryCommands>
+        </CommandBar>
+    </Page.BottomAppBar>
+</Page>

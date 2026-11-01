@@ -1,0 +1,43 @@
+<Page
+    x:Class="Moyue.LogPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Margin="12,12,12,4">
+            <TextBlock Text="墨阅" Style="{StaticResource AppNameStyle}" />
+            <TextBlock Text="运行日志" Style="{StaticResource PageTitleStyle}" />
+        </StackPanel>
+
+        <Grid Grid.Row="1" Margin="12,0,12,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock x:Name="Summary" VerticalAlignment="Center" Style="{StaticResource CaptionMutedStyle}" />
+            <Button Grid.Column="1" Content="刷新" Style="{StaticResource TextLinkStyle}" Click="RefreshClick" Margin="6,0" />
+            <Button Grid.Column="2" Content="复制" Style="{StaticResource TextLinkStyle}" Click="CopyClick" Margin="6,0" />
+            <Button Grid.Column="3" Content="清空" Style="{StaticResource TextLinkStyle}" Click="ClearClick" Margin="6,0" />
+        </Grid>
+
+        <ScrollViewer Grid.Row="2">
+            <TextBlock
+                x:Name="Body"
+                Margin="12,0,12,24"
+                FontFamily="Consolas"
+                FontSize="12"
+                TextWrapping="Wrap"
+                IsTextSelectionEnabled="True"
+                Text="（暂无日志）" />
+        </ScrollViewer>
+    </Grid>
+</Page>

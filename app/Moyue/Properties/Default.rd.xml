@@ -1,0 +1,7 @@
+<Directives xmlns="http://schemas.microsoft.com/netfx/2013/01/metadata">
+  <Application>
+    <Assembly Name="*Application*" Dynamic="Required All" />
+    <!-- Sources sets MaxConnectionsPerServer through reflection (hidden from netstandard1.4). -->
+    <Type Name="System.Net.Http.HttpClientHandler" Dynamic="Required Public" />
+  </Application>
+</Directives>

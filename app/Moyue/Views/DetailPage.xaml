@@ -1,0 +1,98 @@
+<Page
+    x:Class="Moyue.DetailPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Moyue"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Margin="12,12,12,4">
+            <TextBlock Text="墨阅" Style="{StaticResource AppNameStyle}" />
+            <TextBlock x:Name="PageTitle" Text="漫画详情" Style="{StaticResource PageTitleStyle}" />
+        </StackPanel>
+
+        <ListView
+            x:Name="Chapters"
+            Grid.Row="1"
+            Padding="12,0,12,0"
+            SelectionMode="None"
+            IsItemClickEnabled="True"
+            ItemClick="ChapterClick"
+            ItemContainerStyle="{StaticResource RowContainerStyle}">
+            <ListView.Header>
+                <StackPanel>
+                    <Grid Margin="0,8,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="112" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <local:CoverImage x:Name="Cover" Width="112" VerticalAlignment="Top" />
+                        <StackPanel Grid.Column="1" Margin="16,0,0,0">
+                            <TextBlock x:Name="BookTitle" Style="{StaticResource TitleTextBlockStyle}" FontWeight="Light" MaxLines="3" TextTrimming="CharacterEllipsis" />
+                            <TextBlock x:Name="BookAuthor" Style="{StaticResource SecondaryTextStyle}" Margin="0,6,0,0" MaxLines="2" TextTrimming="CharacterEllipsis" />
+                            <TextBlock x:Name="BookSource" Style="{StaticResource BodyTextBlockStyle}" Foreground="{ThemeResource SystemControlForegroundAccentBrush}" Margin="0,4,0,0" />
+                            <TextBlock x:Name="BookState" Style="{StaticResource CaptionMutedStyle}" Margin="0,4,0,0" />
+                            <Button x:Name="ReadButton" Style="{StaticResource AccentButtonStyle}" HorizontalAlignment="Stretch" Margin="0,12,0,0" IsEnabled="False" Click="ReadClick">
+                                <TextBlock x:Name="ReadLabel" Text="开始阅读" TextTrimming="CharacterEllipsis" />
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                    <TextBlock x:Name="BookTags" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource SystemControlForegroundAccentBrush}" Margin="0,16,0,0" />
+                    <TextBlock x:Name="Synopsis" Style="{StaticResource SecondaryTextStyle}" FontSize="14" Margin="0,8,0,0" MaxLines="4" TextTrimming="CharacterEllipsis" />
+                    <HyperlinkButton x:Name="SynopsisToggle" Style="{StaticResource TextLinkStyle}" Content="展开简介" Visibility="Collapsed" Click="SynopsisToggleClick" />
+                    <TextBlock x:Name="LoadMessage" Style="{StaticResource SecondaryTextStyle}" Margin="0,12,0,0" Visibility="Collapsed" />
+                    <HyperlinkButton x:Name="RetryLink" Style="{StaticResource TextLinkStyle}" Content="重新获取" Visibility="Collapsed" Click="RefreshClick" />
+                    <Grid>
+                        <TextBlock x:Name="ChaptersTitle" Text="章节" Style="{StaticResource SectionTitleStyle}" />
+                    </Grid>
+                    <TextBlock x:Name="SelectHint" Style="{StaticResource CaptionMutedStyle}" Margin="0,0,0,8" Visibility="Collapsed" Text="选择要下载的章节，然后点“下载所选”。已下载的章节会自动跳过。" />
+                </StackPanel>
+            </ListView.Header>
+            <ListView.ItemTemplate>
+                <DataTemplate x:DataType="local:ChapterItem">
+                    <StackPanel MinHeight="52" Padding="0,8,0,8" VerticalAlignment="Center">
+                        <TextBlock Text="{x:Bind Title}" Style="{StaticResource SingleLineTextStyle}" />
+                        <TextBlock Text="{x:Bind Note, Mode=OneWay}" Visibility="{x:Bind NoteVisibility, Mode=OneWay}" Style="{StaticResource CaptionMutedStyle}" Margin="0,2,0,0" />
+                    </StackPanel>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+            <ListView.Footer>
+                <Border Height="24" />
+            </ListView.Footer>
+        </ListView>
+
+        <ProgressBar x:Name="Busy" Grid.RowSpan="2" VerticalAlignment="Top" IsIndeterminate="True" Visibility="Collapsed" />
+    </Grid>
+
+    <Page.BottomAppBar>
+        <CommandBar x:Name="Commands">
+            <AppBarButton x:Name="FavoriteCommand" Label="收藏" IsEnabled="False" Click="FavoriteClick">
+                <AppBarButton.Icon><FontIcon x:Name="FavoriteIcon" Glyph="&#xE734;" /></AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton x:Name="DownloadCommand" Label="下载" IsEnabled="False" Click="DownloadModeClick">
+                <AppBarButton.Icon><FontIcon Glyph="&#xE896;" /></AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton x:Name="RefreshCommand" Label="刷新" Click="RefreshClick">
+                <AppBarButton.Icon><FontIcon Glyph="&#xE72C;" /></AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton x:Name="ConfirmDownloadCommand" Label="下载所选" Visibility="Collapsed" Click="ConfirmDownloadClick">
+                <AppBarButton.Icon><FontIcon Glyph="&#xE8FB;" /></AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton x:Name="SelectAllCommand" Label="全选" Visibility="Collapsed" Click="SelectAllClick">
+                <AppBarButton.Icon><FontIcon Glyph="&#xE8B3;" /></AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton x:Name="CancelSelectCommand" Label="取消" Visibility="Collapsed" Click="CancelSelectClick">
+                <AppBarButton.Icon><FontIcon Glyph="&#xE711;" /></AppBarButton.Icon>
+            </AppBarButton>
+            <CommandBar.SecondaryCommands>
+                <AppBarButton x:Name="FromStartCommand" Label="从头阅读" Visibility="Collapsed" Click="FromStartClick" />
+                <AppBarButton x:Name="BookmarksCommand" Label="书签" Click="BookmarksClick" />
+            </CommandBar.SecondaryCommands>
+        </CommandBar>
+    </Page.BottomAppBar>
+</Page>

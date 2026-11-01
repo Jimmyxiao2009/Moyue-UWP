@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" IgnorableNamespaces="uap mp">
+ <Identity Name="Moyue.Reader" Publisher="CN=Moyue" Version="0.2.1.1"/>
+ <mp:PhoneIdentity PhoneProductId="74b40198-c7f9-401c-a80c-d2c5f0cfbb06" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
+ <Properties><DisplayName>墨阅</DisplayName><PublisherDisplayName>Moyue</PublisherDisplayName><Logo>Assets\StoreLogo.png</Logo></Properties>
+ <Dependencies><TargetDeviceFamily Name="Windows.Universal" MinVersion="10.0.10586.0" MaxVersionTested="10.0.19041.0"/></Dependencies>
+ <Resources><Resource Language="zh-CN"/></Resources>
+ <Applications><Application Id="App" Executable="$targetnametoken$.exe" EntryPoint="Moyue.App"><uap:VisualElements DisplayName="墨阅" Description="三源漫画阅读器" BackgroundColor="#0078D7" Square150x150Logo="Assets\Square150x150Logo.png" Square44x44Logo="Assets\Square44x44Logo.png"><uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png"/><uap:SplashScreen Image="Assets\SplashScreen.png"/></uap:VisualElements></Application></Applications>
+ <Capabilities><Capability Name="internetClient"/><Capability Name="privateNetworkClientServer"/></Capabilities>
+</Package>

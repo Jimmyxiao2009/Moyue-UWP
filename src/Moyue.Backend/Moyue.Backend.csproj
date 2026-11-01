@@ -1,0 +1,7 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+ <PropertyGroup><TargetFramework>netstandard1.4</TargetFramework><LangVersion>7.3</LangVersion><EnableDefaultCompileItems>false</EnableDefaultCompileItems><RestorePackagesPath>../../.packages</RestorePackagesPath></PropertyGroup>
+ <ItemGroup>
+  <Compile Include="../../app/Moyue/Models.cs;../../app/Moyue/BackendContracts.cs;../../app/Moyue/Store.cs;../../app/Moyue/Sources.cs;../../app/Moyue/SourceParsers.cs;../../app/Moyue/SearchService.cs;../../app/Moyue/PixelTransforms.cs;../../app/Moyue/ImageService.cs;../../app/Moyue/DownloadEngine.cs;../../app/Moyue/Core/*.cs;../../app/Moyue/Log.cs"/>
+  <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/><PackageReference Include="HtmlAgilityPack" Version="1.11.46"/>
+ </ItemGroup>
+</Project>
